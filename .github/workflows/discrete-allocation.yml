@@ -1,0 +1,24 @@
+name: Discrete allocation regressions
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  discrete-allocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv venv
+      - run: uv pip install -e . pytest ecos
+      - run: uv run --no-sync pytest tests/test_discrete_allocation.py -q
