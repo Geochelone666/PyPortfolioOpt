@@ -6,6 +6,17 @@ from pypfopt import CovarianceShrinkage, HRPOpt
 from tests.utilities_for_tests import get_data, resource
 
 
+@pytest.mark.parametrize(
+    "method", ["single", "complete", "average", "weighted", "centroid", "median", "ward"]
+)
+def test_documented_linkage_methods(method):
+    cov = pd.DataFrame(np.eye(3), index=list("ABC"), columns=list("ABC"))
+    weights = HRPOpt(cov_matrix=cov).optimize(linkage_method=method)
+    assert set(weights) == set("ABC")
+    assert sum(weights.values()) == pytest.approx(1)
+    assert all(weight > 0 for weight in weights.values())
+
+
 def test_hrp_errors():
     with pytest.raises(ValueError):
         hrp = HRPOpt()
