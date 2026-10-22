@@ -176,9 +176,6 @@ class HRPOpt(BaseOptimizer):
         OrderedDict
             weights for the HRP portfolio
         """
-        if linkage_method not in sch._LINKAGE_METHODS:
-            raise ValueError("linkage_method must be one recognised by scipy")
-
         if self.returns is None:
             cov = self.cov_matrix
             corr = cov_to_corr(self.cov_matrix).round(6)
@@ -192,6 +189,7 @@ class HRPOpt(BaseOptimizer):
         matrix = np.sqrt(np.clip((1.0 - corr) / 2.0, a_min=0.0, a_max=1.0))
         dist = ssd.squareform(matrix, checks=False)
 
+        # Let the public API validate methods; SciPy's private registry can change.
         self.clusters = sch.linkage(dist, linkage_method)
         sort_ix = HRPOpt._get_quasi_diag(self.clusters)
         ordered_tickers = corr.index[sort_ix].tolist()
