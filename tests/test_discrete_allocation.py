@@ -7,6 +7,18 @@ from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from tests.utilities_for_tests import get_data, setup_efficient_frontier
 
 
+@pytest.mark.parametrize("budget, expected, cash", [(100, {"B": 1}, 50), (10, {}, 10)])
+def test_greedy_portfolio_with_no_initial_shares(budget, expected, cash):
+    da = DiscreteAllocation(
+        {"A": 0.9, "B": 0.1}, pd.Series({"A": 1000.0, "B": 50.0}),
+        total_portfolio_value=budget,
+    )
+    with np.errstate(divide="raise", invalid="raise"):
+        allocation, leftover = da.greedy_portfolio()
+    assert allocation == expected
+    assert leftover == pytest.approx(cash)
+
+
 @pytest.mark.parametrize(
     "prices",
     [

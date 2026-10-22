@@ -241,7 +241,9 @@ class DiscreteAllocation:
             # Calculate the equivalent continuous weights of the shares that
             # have already been bought
             current_weights = np.array(buy_prices) * np.array(shares_bought)
-            current_weights /= current_weights.sum()
+            invested = current_weights.sum()
+            if invested > 0:
+                current_weights /= invested
             ideal_weights = np.array([i[1] for i in self.weights])
             deficit = ideal_weights - current_weights
 
