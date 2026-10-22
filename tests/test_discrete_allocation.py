@@ -7,6 +7,21 @@ from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from tests.utilities_for_tests import get_data, setup_efficient_frontier
 
 
+@pytest.mark.parametrize(
+    "prices",
+    [
+        pd.Series({"B": 100.0, "A": 10.0}),
+        pd.Series({"UNUSED": 5.0, "B": 100.0, "A": 10.0}),
+    ],
+)
+def test_lp_portfolio_aligns_prices_with_weight_tickers(prices):
+    da = DiscreteAllocation({"A": 0.5, "B": 0.5}, prices, total_portfolio_value=200)
+    allocation, leftover = da.lp_portfolio(solver="SCIPY")
+    assert allocation == {"A": 10, "B": 1}
+    assert leftover == pytest.approx(0)
+    assert sum(prices[ticker] * shares for ticker, shares in allocation.items()) == 200
+
+
 def test_get_latest_prices():
     df = get_data()
     latest_prices = get_latest_prices(df)
