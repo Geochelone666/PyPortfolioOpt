@@ -481,3 +481,35 @@ def test_allocation_errors():
     latest_prices.iloc[0] = np.nan
     with pytest.raises(TypeError):
         DiscreteAllocation(w, latest_prices)
+
+
+def test_discrete_allocation_empty_weights_rejected_on_allocate():
+    da = DiscreteAllocation({}, pd.Series({"A": 10.0}), total_portfolio_value=100)
+    with pytest.raises(ValueError, match="at least one ticker"):
+        da.greedy_portfolio()
+    with pytest.raises(ValueError, match="at least one ticker"):
+        da.lp_portfolio()
+
+
+def test_discrete_allocation_rejects_missing_prices():
+    with pytest.raises(ValueError, match="missing tickers"):
+        DiscreteAllocation(
+            {"A": 0.5, "C": 0.5}, pd.Series({"A": 10.0}), total_portfolio_value=100
+        )
+
+
+@pytest.mark.parametrize("bad_price", [0.0, -5.0, float("inf")])
+def test_discrete_allocation_rejects_nonpositive_or_infinite_prices(bad_price):
+    with pytest.raises(ValueError, match="positive and finite"):
+        DiscreteAllocation(
+            {"A": 0.5, "B": 0.5},
+            pd.Series({"A": 10.0, "B": bad_price}),
+            total_portfolio_value=100,
+        )
+
+
+def test_discrete_allocation_ignores_prices_of_unweighted_assets():
+    da = DiscreteAllocation(
+        {"A": 1.0}, pd.Series({"A": 10.0, "B": 0.0}), total_portfolio_value=100
+    )
+    assert da.greedy_portfolio()[0] == {"A": 10}

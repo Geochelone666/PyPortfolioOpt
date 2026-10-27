@@ -84,6 +84,11 @@ class DiscreteAllocation:
             if ``latest_prices`` isn't a series
         ValueError
             if ``short_ratio < 0``
+        ValueError
+            if a weighted ticker has no price in ``latest_prices``, or such
+            a price is not positive and finite. An empty ``weights`` dict is
+            accepted here (for utility methods) but rejected by the
+            allocation methods.
         """
         if not isinstance(weights, dict):
             raise TypeError("weights should be a dictionary of {ticker: weight}")
@@ -95,6 +100,11 @@ class DiscreteAllocation:
             raise ValueError("total_portfolio_value must be greater than zero")
         if short_ratio is not None and short_ratio < 0:
             raise ValueError("short_ratio must be non-negative")
+        missing = [t for t in weights if t not in latest_prices.index]
+        if missing:
+            raise ValueError(f"latest_prices is missing tickers: {missing}")
+        if any(not np.isfinite(latest_prices[t]) or latest_prices[t] <= 0 for t in weights):
+            raise ValueError("latest_prices must be positive and finite")
 
         # Drop any companies with negligible weights. Use a tuple because order matters.
         self.weights = list(weights.items())
@@ -173,6 +183,8 @@ class DiscreteAllocation:
             the number of shares of each ticker that should be purchased,
             along with the amount of funds leftover.
         """
+        if len(self.weights) == 0:
+            raise ValueError("weights must contain at least one ticker")
         # Sort in descending order of weight
         self.weights.sort(key=lambda x: x[1], reverse=True)
 
@@ -319,6 +331,8 @@ class DiscreteAllocation:
             )
         # end todo
 
+        if len(self.weights) == 0:
+            raise ValueError("weights must contain at least one ticker")
         if any([w < 0 for _, w in self.weights]):
             longs = {t: w for t, w in self.weights if w >= 0}
             shorts = {t: -w for t, w in self.weights if w < 0}
